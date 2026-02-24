@@ -1,0 +1,113 @@
+---
+# ── SQLite config (default) ───────────────────────────────────────────────────
+# Switch to chroma-config below if you want ChromaDB backend
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: self-improvement-mcp-config
+  namespace: ai
+data:
+  config.toml: |
+    [server]
+    addr = ":8080"
+
+    [backend]
+    # Switch to "chroma" to use your ChromaDB instance
+    type = "sqlite"
+
+    [sqlite]
+    path = "/data/learnings.db"
+
+    [chroma]
+    url         = "http://chromamcp.srclos.net"
+    collection  = "self_improvement"
+    # Uncomment to use Ollama for semantic embeddings:
+    # embedding_model = "nomic-embed-text"
+    # ollama_url      = "http://ollama:11434"
+
+---
+# ── PVC for SQLite data ───────────────────────────────────────────────────────
+# Not needed if using ChromaDB backend, but harmless to keep
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: self-improvement-mcp-data
+  namespace: ai
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: self-improvement-mcp
+  namespace: ai
+  labels:
+    app: self-improvement-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: self-improvement-mcp
+  template:
+    metadata:
+      labels:
+        app: self-improvement-mcp
+    spec:
+      containers:
+        - name: self-improvement-mcp
+          image: harbor.yourdomain.com/ai/self-improvement-mcp:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: CONFIG_FILE
+              value: /config/config.toml
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+      volumes:
+        - name: config
+          configMap:
+            name: self-improvement-mcp-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: self-improvement-mcp-data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: self-improvement-mcp
+  namespace: ai
+spec:
+  selector:
+    app: self-improvement-mcp
+  ports:
+    - port: 8080
+      targetPort: 8080

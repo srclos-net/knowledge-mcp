@@ -1,0 +1,19 @@
+# self-improvement-mcp configuration
+
+[server]
+addr = "0.0.0.0:8181"
+
+[backend]
+# "sqlite" or "chroma"
+type = "chroma"
+
+[sqlite]
+path = "/data/learnings.db"
+
+[chroma]
+url        = "http://192.168.1.20:8001"
+tenant     = "default_tenant"
+database   = "default_database"
+collection = "self_improvement"
+embedding_model = "nomic-embed-text"
+ollama_url      = "http://192.168.1.20:11434"
