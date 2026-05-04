@@ -1,6 +1,9 @@
 package main
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // Learning is the core data type shared across backends.
 type Learning struct {
@@ -48,7 +51,9 @@ func NewBackend(cfg *Config) (Backend, error) {
 		return NewSQLiteBackend(cfg.SQLite.Path)
 	case "chroma":
 		return NewChromaBackend(cfg.Chroma)
+	case "supabase":
+		return NewSupabaseBackend(cfg.Supabase)
 	default:
-		return nil, nil
+		return nil, fmt.Errorf("unknown backend type: %q", cfg.Backend.Type)
 	}
 }

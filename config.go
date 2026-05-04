@@ -8,10 +8,11 @@ import (
 )
 
 type Config struct {
-	Server  ServerConfig  `toml:"server"`
-	Backend BackendConfig `toml:"backend"`
-	SQLite  SQLiteConfig  `toml:"sqlite"`
-	Chroma  ChromaConfig  `toml:"chroma"`
+	Server   ServerConfig   `toml:"server"`
+	Backend  BackendConfig  `toml:"backend"`
+	SQLite   SQLiteConfig   `toml:"sqlite"`
+	Chroma   ChromaConfig   `toml:"chroma"`
+	Supabase SupabaseConfig `toml:"supabase"`
 }
 
 type ServerConfig struct {
@@ -35,6 +36,14 @@ type ChromaConfig struct {
 	OllamaURL      string `toml:"ollama_url"`
 }
 
+type SupabaseConfig struct {
+	URL            string `toml:"url"`             // postgres connection string
+	Table          string `toml:"table"`           // default: "learnings"
+	EmbeddingModel string `toml:"embedding_model"` // ollama model name, or "" for ILIKE text fallback
+	OllamaURL      string `toml:"ollama_url"`
+	EmbeddingDim   int    `toml:"embedding_dim"` // default: 768 (nomic-embed-text)
+}
+
 func DefaultConfig() *Config {
 	return &Config{
 		Server: ServerConfig{
@@ -53,6 +62,11 @@ func DefaultConfig() *Config {
 			Collection:     "self_improvement",
 			EmbeddingModel: "",
 			OllamaURL:      "http://ollama:11434",
+		},
+		Supabase: SupabaseConfig{
+			Table:        "learnings",
+			OllamaURL:    "http://ollama:11434",
+			EmbeddingDim: 768,
 		},
 	}
 }
@@ -108,5 +122,13 @@ collection = "self_improvement"
 # Optional: use ollama for real semantic embeddings
 # embedding_model = "nomic-embed-text"
 # ollama_url      = "http://ollama:11434"
+
+[supabase]
+# url = "postgres://postgres.xxxx:password@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
+# table = "learnings"
+# Optional: use ollama for pgvector semantic search; falls back to ILIKE otherwise
+# embedding_model = "nomic-embed-text"
+# ollama_url      = "http://ollama:11434"
+# embedding_dim   = 768
 `
 }
